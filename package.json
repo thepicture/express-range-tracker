@@ -1,0 +1,23 @@
+{
+  "name": "express-range-tracker",
+  "version": "0.0.0",
+  "description": "Detects bots by tracking the timings of file chunks",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "keywords": [
+    "express",
+    "range",
+    "content-length",
+    "detection",
+    "botnet",
+    "fingerprint"
+  ],
+  "author": "thepicture",
+  "license": "ISC",
+  "devDependencies": {
+    "express": "4.18.2",
+    "supertest": "6.3.3"
+  }
+}
