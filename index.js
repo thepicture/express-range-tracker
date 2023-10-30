@@ -1,8 +1,11 @@
 const defaultStorage = {};
 
-module.exports =
-  ({ storage, timestampFunction } = { storage: defaultStorage }) =>
-  (req, _, next) => {
+module.exports = (
+  { storage, timestampFunction, onDownloaded, max } = {
+    storage: defaultStorage,
+  }
+) =>
+  function (req, _, next) {
     if (!req.headers.range) {
       return next();
     }
@@ -18,9 +21,11 @@ module.exports =
 
     const { ip } = req;
 
+    const timestampFunc = timestampFunction ?? Date.now;
+
     for (const [from, to] of ranges) {
       const downloadLog = {
-        timestamp: timestampFunction?.() ?? Date.now(),
+        timestamp: timestampFunc(),
         from: Number.parseInt(from),
         to: to ? Number.parseInt(to) : Infinity,
       };
@@ -33,4 +38,24 @@ module.exports =
     }
 
     req.chunks = storage[ip];
+
+    if (!onDownloaded || !max) {
+      return;
+    }
+
+    const clonedRanges = req.chunks.map((entry) =>
+      JSON.parse(JSON.stringify(entry))
+    );
+
+    for (let i = 1; i < clonedRanges.length; i++) {
+      if (clonedRanges[i - 1].to !== clonedRanges[i].from - 1) {
+        return;
+      }
+    }
+
+    if (clonedRanges.at(-1)?.to !== max) {
+      return;
+    }
+
+    onDownloaded(timestampFunc());
   };
