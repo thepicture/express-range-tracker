@@ -155,4 +155,37 @@ describe("express-range-tracker", () => {
 
     assert.deepEqual(expected, actual);
   });
+
+  it("should emit downloaded event when all parts downloaded", (done) => {
+    const expected = 1;
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=0-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+    };
+
+    const track = rangeTracker({
+      timestampFunction: () => 1,
+      storage,
+      onDownloaded: (actual) => {
+        assert.strictEqual(actual, expected);
+        assert.ok(actual);
+
+        done();
+      },
+      max: 100,
+    });
+
+    track(req1, res, next);
+    track(req2, res, next);
+  });
 });
