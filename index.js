@@ -5,7 +5,7 @@ module.exports = (
     storage: defaultStorage,
   }
 ) =>
-  function (req, _, next) {
+  function (req, res, next) {
     if (!req.headers.range) {
       return next();
     }
@@ -57,5 +57,5 @@ module.exports = (
       return;
     }
 
-    onDownloaded(timestampFunc());
+    onDownloaded(req, res, next);
   };
