@@ -176,9 +176,10 @@ describe("express-range-tracker", () => {
     const track = rangeTracker({
       timestampFunction: () => 1,
       storage,
-      onDownloaded: (actual) => {
-        assert.strictEqual(actual, expected);
-        assert.ok(actual);
+      onDownloaded: (req, res, next) => {
+        assert.ok(req);
+        assert.ok(res);
+        assert.ok(next);
 
         done();
       },
