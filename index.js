@@ -1,7 +1,14 @@
 const defaultStorage = {};
 
 module.exports = (
-  { storage, timestampFunction, onDownloaded, max } = {
+  {
+    storage,
+    timestampFunction,
+    onDownloaded,
+    onDeadlineReached,
+    max,
+    maxDelay,
+  } = {
     storage: defaultStorage,
   }
 ) =>
@@ -32,6 +39,17 @@ module.exports = (
 
       if (!storage[ip]) {
         storage[ip] = [];
+      }
+
+      if (onDeadlineReached) {
+        const isDeadlineReached =
+          maxDelay &&
+          downloadLog.timestamp -
+            Object.values(storage).at(-1)?.[0]?.timestamp >
+            maxDelay;
+        if (isDeadlineReached) {
+          onDeadlineReached(req, res, next);
+        }
       }
 
       storage[ip].push(downloadLog);

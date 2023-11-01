@@ -157,7 +157,24 @@ describe("express-range-tracker", () => {
   });
 
   it("should emit downloaded event when all parts downloaded", (done) => {
-    const expected = 1;
+    const expected = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+      chunks: [
+        {
+          timestamp: 1,
+          from: 0,
+          to: 50,
+        },
+        {
+          timestamp: 1,
+          from: 51,
+          to: 100,
+        },
+      ],
+    };
     const storage = {};
 
     const req1 = {
@@ -177,13 +194,103 @@ describe("express-range-tracker", () => {
       timestampFunction: () => 1,
       storage,
       onDownloaded: (req, res, next) => {
-        assert.ok(req);
+        assert.deepStrictEqual(req, expected);
         assert.ok(res);
         assert.ok(next);
 
         done();
       },
       max: 100,
+    });
+
+    track(req1, res, next);
+    track(req2, res, next);
+  });
+
+  it("should emit deadline event when chunk requested slowly", (done) => {
+    const expected = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+    };
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=0-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+    };
+    let timestamp = 0;
+
+    const track = rangeTracker({
+      timestampFunction: () => {
+        const current = timestamp;
+
+        timestamp += 2;
+
+        return current;
+      },
+      storage,
+      onDeadlineReached: (req, res, next) => {
+        assert.deepStrictEqual(req, expected);
+        assert.ok(res);
+        assert.ok(next);
+
+        done();
+      },
+      max: 100,
+      maxDelay: 1,
+    });
+
+    track(req1, res, next);
+    track(req2, res, next);
+  });
+
+  it("should not emit deadline event when chunk requested commonly", () => {
+    const expected = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+    };
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=0-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=51-100",
+      },
+    };
+    let timestamp = 0;
+
+    const track = rangeTracker({
+      timestampFunction: () => {
+        const current = timestamp;
+
+        timestamp += 1;
+
+        return current;
+      },
+      storage,
+      onDeadlineReached: () => {
+        assert.fail();
+      },
+      max: 100,
+      maxDelay: 1,
     });
 
     track(req1, res, next);

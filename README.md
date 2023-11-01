@@ -26,6 +26,8 @@ express()
 
 `onDownloaded` - event that behaves as middleware
 
+`onDeadlineReached` - event that fires when `maxDelay` exceeds timestamp window between the last and the new timestamps
+
 # Test
 
 ```bash
