@@ -2,12 +2,14 @@ const defaultStorage = {};
 
 module.exports = (
   {
+    max,
     storage,
-    timestampFunction,
+    maxDelay,
     onDownloaded,
     onDeadlineReached,
-    max,
-    maxDelay,
+    timestampFunction,
+    bannedTraits = [],
+    allowedTraits = [],
   } = {
     storage: defaultStorage,
   }
@@ -51,6 +53,28 @@ module.exports = (
           onDeadlineReached(req, res, next);
         }
       }
+
+      const previous = storage[ip].at(-1);
+
+      bannedTraits.forEach((trait) => {
+        if (!previous) {
+          return;
+        }
+
+        if (trait(previous, downloadLog)) {
+          throw new RangeError("Banned trait match");
+        }
+      });
+
+      allowedTraits.forEach((trait) => {
+        if (!previous) {
+          return;
+        }
+
+        if (!trait(previous, downloadLog)) {
+          throw new RangeError("Allowed trait mismatch");
+        }
+      });
 
       storage[ip].push(downloadLog);
     }
