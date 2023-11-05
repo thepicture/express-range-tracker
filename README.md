@@ -28,6 +28,26 @@ express()
 
 `onDeadlineReached` - event that fires when `maxDelay` exceeds timestamp window between the last and the new timestamps
 
+`allowedTraits` - array of functions that determine whitelist of range header behavior. `true` if match, `false` otherwise
+
+```js
+interface Trait {
+  from: number;
+  to: number;
+  timestamp: number;
+}
+```
+
+```js
+(previous: Trait, current: Trait) => boolean;
+```
+
+`bannedTraits` - array of functions that determine blacklist of range header behavior. `true` if match, `false` otherwise
+
+```js
+(previous: Trait, current: Trait) => boolean;
+```
+
 # Test
 
 ```bash
