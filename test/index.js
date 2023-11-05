@@ -255,12 +255,6 @@ describe("express-range-tracker", () => {
   });
 
   it("should not emit deadline event when chunk requested commonly", () => {
-    const expected = {
-      ip: "::1",
-      headers: {
-        range: "bytes=51-100",
-      },
-    };
     const storage = {};
 
     const req1 = {
@@ -295,5 +289,90 @@ describe("express-range-tracker", () => {
 
     track(req1, res, next);
     track(req2, res, next);
+  });
+
+  it("should throw on banned trait", () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+
+    const track = rangeTracker({
+      storage,
+      bannedTraits: [(previous, current) => current.from - previous.from === 0],
+      max: 100,
+      maxDelay: 1,
+    });
+
+    track(req1, res, next);
+    assert.throws(() => track(req2, res, next));
+  });
+
+  it("should not throw on conforming to allowed trait", () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=3-100",
+      },
+    };
+
+    const track = rangeTracker({
+      storage,
+      allowedTraits: [
+        (previous, current) => current.from - previous.from === 1,
+      ],
+      max: 100,
+      maxDelay: 1,
+    });
+
+    track(req1, res, next);
+    assert.doesNotThrow(() => track(req2, res, next));
+  });
+
+  it("should throw on not conforming to allowed trait", () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+
+    const track = rangeTracker({
+      storage,
+      allowedTraits: [
+        (previous, current) => current.from - previous.from !== 0,
+      ],
+      max: 100,
+      maxDelay: 1,
+    });
+
+    track(req1, res, next);
+    assert.throws(() => track(req2, res, next));
   });
 });
