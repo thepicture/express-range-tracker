@@ -156,7 +156,7 @@ describe("express-range-tracker", () => {
     assert.deepEqual(expected, actual);
   });
 
-  it("should emit downloaded event when all parts downloaded", (done) => {
+  it("should emit downloaded event when all parts downloaded", async () => {
     const expected = {
       ip: "::1",
       headers: {
@@ -190,24 +190,26 @@ describe("express-range-tracker", () => {
       },
     };
 
-    const track = rangeTracker({
-      timestampFunction: () => 1,
-      storage,
-      onDownloaded: (req, res, next) => {
-        assert.deepStrictEqual(req, expected);
-        assert.ok(res);
-        assert.ok(next);
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        timestampFunction: () => 1,
+        storage,
+        onDownloaded: (req, res, next) => {
+          assert.deepStrictEqual(req, expected);
+          assert.ok(res);
+          assert.ok(next);
 
-        done();
-      },
-      max: 100,
+          resolve();
+        },
+        max: 100,
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
     });
-
-    track(req1, res, next);
-    track(req2, res, next);
   });
 
-  it("should emit deadline event when chunk requested slowly", (done) => {
+  it("should emit deadline event when chunk requested slowly", async () => {
     const expected = {
       ip: "::1",
       headers: {
@@ -230,28 +232,30 @@ describe("express-range-tracker", () => {
     };
     let timestamp = 0;
 
-    const track = rangeTracker({
-      timestampFunction: () => {
-        const current = timestamp;
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        timestampFunction: () => {
+          const current = timestamp;
 
-        timestamp += 2;
+          timestamp += 2;
 
-        return current;
-      },
-      storage,
-      onDeadlineReached: (req, res, next) => {
-        assert.deepStrictEqual(req, expected);
-        assert.ok(res);
-        assert.ok(next);
+          return current;
+        },
+        storage,
+        onDeadlineReached: (req, res, next) => {
+          assert.deepStrictEqual(req, expected);
+          assert.ok(res);
+          assert.ok(next);
 
-        done();
-      },
-      max: 100,
-      maxDelay: 1,
+          resolve();
+        },
+        max: 100,
+        maxDelay: 1,
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
     });
-
-    track(req1, res, next);
-    track(req2, res, next);
   });
 
   it("should not emit deadline event when chunk requested commonly", () => {
