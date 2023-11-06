@@ -375,4 +375,95 @@ describe("express-range-tracker", () => {
     track(req1, res, next);
     assert.throws(() => track(req2, res, next));
   });
+
+  it("should fire similar trait event on similar trait", async () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+    const req3 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req4 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onSimilarTrait: (ips) => {
+          assert.ok(ips.length === 1);
+          assert.ok(ips[0] === req1.ip);
+
+          resolve();
+        },
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
+      track(req3, res, next);
+      track(req4, res, next);
+    });
+  });
+
+  it("should not fire similar trait event on not similar trait", async () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+    const req3 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req4 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-101",
+      },
+    };
+
+    await new Promise((resolve, reject) => {
+      const track = rangeTracker({
+        storage,
+        onSimilarTrait: () => {
+          reject(assert.fail());
+        },
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
+      track(req3, res, next);
+      track(req4, res, next);
+
+      resolve();
+    });
+  });
 });

@@ -6,6 +6,7 @@ module.exports = (
     storage,
     maxDelay,
     onDownloaded,
+    onSimilarTrait,
     onDeadlineReached,
     timestampFunction,
     bannedTraits = [],
@@ -56,27 +57,51 @@ module.exports = (
 
       const previous = storage[ip].at(-1);
 
-      bannedTraits.forEach((trait) => {
+      bannedTraits.forEach((traitMatches) => {
         if (!previous) {
           return;
         }
 
-        if (trait(previous, downloadLog)) {
+        if (traitMatches(previous, downloadLog)) {
           throw new RangeError("Banned trait match");
         }
       });
 
-      allowedTraits.forEach((trait) => {
+      allowedTraits.forEach((traitMatches) => {
         if (!previous) {
           return;
         }
 
-        if (!trait(previous, downloadLog)) {
+        if (!traitMatches(previous, downloadLog)) {
           throw new RangeError("Allowed trait mismatch");
         }
       });
 
       storage[ip].push(downloadLog);
+    }
+
+    if (typeof onSimilarTrait === "function") {
+      const reducer = (acc, { from, to }) => (acc += `${from},${to};`);
+
+      const currentIpHash = storage[ip].reduce(reducer, "");
+
+      const matchingIps = Object.keys(storage).reduce((acc, key) => {
+        if (key === ip) {
+          return acc;
+        }
+
+        const hash = storage[key].reduce(reducer, "");
+
+        if (hash === currentIpHash) {
+          acc.push(key);
+        }
+
+        return acc;
+      }, []);
+
+      if (matchingIps.length) {
+        onSimilarTrait(matchingIps);
+      }
     }
 
     req.chunks = storage[ip];

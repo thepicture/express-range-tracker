@@ -48,6 +48,17 @@ interface Trait {
 (previous: Trait, current: Trait) => boolean;
 ```
 
+`onSimilarTrait` - fires when another ips had the same range behavior as the current ip. The current ip will not be in the list
+
+```js
+const track = rangeTracker({
+  storage,
+  onSimilarTrait: (ips) => {
+    console.log(ips.length);
+  },
+});
+```
+
 # Test
 
 ```bash
