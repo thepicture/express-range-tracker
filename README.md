@@ -59,6 +59,17 @@ const track = rangeTracker({
 });
 ```
 
+`onRobotic` - fires when range is malformed in some way:
+
+- `malformed` - does not conform to range spec
+- `digits` - `from` is bigger than `to` in range segment
+- `empty` - range header is present but length of string is 0
+- `absent` - request of content that should have range header but does not exist
+
+```js
+onRobotic(req, reason);
+```
+
 # Test
 
 ```bash

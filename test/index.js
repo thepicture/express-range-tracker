@@ -470,4 +470,106 @@ describe("express-range-tracker", () => {
       resolve();
     });
   });
+
+  it("should fire onrobotic event on malformed range", async () => {
+    const expected = "malformed";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {
+        range: "btes=2-50",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
+
+  it("should fire onrobotic digits event on wrong range from and to numbers", async () => {
+    const expected = "digits";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {
+        range: "bytes=50-2",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
+
+  it("should fire onrobotic empty event on empty range", async () => {
+    const expected = "empty";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {
+        range: "",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
+
+  it("should fire onrobotic absent event on no range", async () => {
+    const expected = "absent";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {},
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
 });
