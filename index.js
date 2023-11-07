@@ -5,6 +5,7 @@ module.exports = (
     max,
     storage,
     maxDelay,
+    onRobotic,
     onDownloaded,
     onSimilarTrait,
     onDeadlineReached,
@@ -16,8 +17,16 @@ module.exports = (
   }
 ) =>
   function (req, res, next) {
-    if (!req.headers.range) {
+    if (typeof req.headers.range === "undefined") {
+      if (typeof onRobotic === "function") {
+        onRobotic(req, "absent");
+      }
+
       return next();
+    }
+
+    if (!req.headers.range.length && typeof onRobotic === "function") {
+      onRobotic(req, "empty");
     }
 
     const ranges = req.headers.range
@@ -39,6 +48,16 @@ module.exports = (
         from: Number.parseInt(from),
         to: to ? Number.parseInt(to) : Infinity,
       };
+
+      if (typeof onRobotic === "function") {
+        if (!/^bytes=\d+-\d*(,\d+-\d*)*$/g.test(req.headers.range)) {
+          onRobotic(req, "malformed");
+        }
+
+        if (from > to) {
+          onRobotic(req, "digits");
+        }
+      }
 
       if (!storage[ip]) {
         storage[ip] = [];
