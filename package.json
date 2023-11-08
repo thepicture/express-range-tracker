@@ -3,6 +3,9 @@
   "version": "1.0.6",
   "description": "Detects bots by tracking the timings of range header",
   "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "node test"
   },
