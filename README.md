@@ -70,6 +70,12 @@ const track = rangeTracker({
 onRobotic(req, reason);
 ```
 
+`onSimilarTimestamp` - function that fires on clients with same range request timestamp windows
+
+```js
+onSimilarTimestamp(req, ips);
+```
+
 # Test
 
 ```bash

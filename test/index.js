@@ -572,4 +572,98 @@ describe("express-range-tracker", () => {
       track(req, res, next);
     });
   });
+
+  it("should fire similar timestamp event when requests have similar timestamp windows", async () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+    const req3 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req4 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-101",
+      },
+    };
+    const timestamps = [1, 4, 5, 8];
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        timestampFunction: () => timestamps.shift(),
+        onSimilarTimestamp: (_, [ip]) => {
+          assert.strictEqual(ip, req1.ip);
+
+          resolve();
+        },
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
+      track(req3, res, next);
+      track(req4, res, next);
+    });
+  });
+
+  it("should not fire similar timestamp event when requests do not have similar timestamp windows", async () => {
+    const storage = {};
+
+    const req1 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req2 = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-100",
+      },
+    };
+    const req3 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+    const req4 = {
+      ip: "::2",
+      headers: {
+        range: "bytes=2-101",
+      },
+    };
+    const timestamps = [1, 4, 5, 9];
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        timestampFunction: () => timestamps.shift(),
+        onSimilarTimestamp: () => {
+          assert.fail();
+        },
+      });
+
+      track(req1, res, next);
+      track(req2, res, next);
+      track(req3, res, next);
+      track(req4, res, next);
+
+      resolve();
+    });
+  });
 });
