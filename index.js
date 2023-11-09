@@ -1,5 +1,7 @@
 const defaultStorage = {};
 
+const prop = (key) => (obj) => obj[key];
+
 module.exports = (
   {
     max,
@@ -9,6 +11,7 @@ module.exports = (
     onDownloaded,
     onSimilarTrait,
     onDeadlineReached,
+    onSimilarTimestamp,
     timestampFunction,
     bannedTraits = [],
     allowedTraits = [],
@@ -97,6 +100,40 @@ module.exports = (
       });
 
       storage[ip].push(downloadLog);
+    }
+
+    if (typeof onSimilarTimestamp === "function") {
+      const reducer =
+        (ip) =>
+        (acc, { timestamp }, index, arr) => {
+          if (index) {
+            acc.push({
+              ip,
+              window: timestamp - arr[index - 1].timestamp,
+            });
+          }
+
+          return acc;
+        };
+
+      const timestampWindows = Object.keys(storage)
+        .filter((key) => storage[key].ip !== ip)
+        .map((key) => storage[key].reduce(reducer(key), []));
+
+      const currentTimestampWindow = storage[ip]
+        .reduce(reducer(ip), [])
+        .map(prop("window"))
+        .join();
+
+      const similarTimestampWindows = timestampWindows.filter(
+        (chunks) =>
+          chunks.map(prop("window")).join() === currentTimestampWindow &&
+          chunks[0]?.ip !== ip
+      );
+
+      if (currentTimestampWindow && similarTimestampWindows.length) {
+        onSimilarTimestamp(req, similarTimestampWindows.flat().map(prop("ip")));
+      }
     }
 
     if (typeof onSimilarTrait === "function") {
