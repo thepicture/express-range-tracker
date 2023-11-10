@@ -7,9 +7,11 @@ module.exports = (
     max,
     storage,
     maxDelay,
+    maxParts,
     onRobotic,
     onDownloaded,
     onSimilarTrait,
+    onRangeOverflow,
     onDeadlineReached,
     onSimilarTimestamp,
     timestampFunction,
@@ -37,6 +39,15 @@ module.exports = (
       .split(",")
       .map((range) => range.split("-"));
 
+    const shouldRangeOverflowForPartsFire =
+      typeof onRangeOverflow === "function" &&
+      typeof maxParts === "number" &&
+      ranges.length > maxParts;
+
+    if (shouldRangeOverflowForPartsFire) {
+      onRangeOverflow(req, "parts");
+    }
+
     if (!storage) {
       storage = defaultStorage;
     }
@@ -51,6 +62,15 @@ module.exports = (
         from: Number.parseInt(from),
         to: to ? Number.parseInt(to) : Infinity,
       };
+
+      const shouldFireOnOverflow =
+        typeof onRangeOverflow === "function" &&
+        typeof max === "number" &&
+        max < to;
+
+      if (shouldFireOnOverflow) {
+        onRangeOverflow(req, "overflow");
+      }
 
       if (typeof onRobotic === "function") {
         if (!/^bytes=\d+-\d*(,\d+-\d*)*$/g.test(req.headers.range)) {

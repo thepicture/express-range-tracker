@@ -666,4 +666,106 @@ describe("express-range-tracker", () => {
       resolve();
     });
   });
+
+  it("should fire overflow event with overflow reason when max overflows", async () => {
+    const storage = {};
+
+    const dummyReq = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        max: 49,
+        onRangeOverflow: (req, reason) => {
+          assert.strictEqual(reason, "overflow");
+          assert.ok(req.ip === req.ip);
+
+          resolve();
+        },
+      });
+
+      track(dummyReq, res, next);
+    });
+  });
+
+  it("should not fire overflow event when max does not overflow", async () => {
+    const storage = {};
+
+    const dummyReq = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-49",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        max: 49,
+        onRangeOverflow: () => {
+          assert.fail();
+        },
+      });
+
+      track(dummyReq, res, next);
+
+      resolve();
+    });
+  });
+
+  it("should fire range overflow event with parts reason when range part count overflows", async () => {
+    const storage = {};
+
+    const dummyReq = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50,50-100",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        maxParts: 1,
+        onRangeOverflow: (req, reason) => {
+          assert.strictEqual(reason, "parts");
+          assert.ok(req.ip === req.ip);
+
+          resolve();
+        },
+      });
+
+      track(dummyReq, res, next);
+    });
+  });
+
+  it("should not fire range overflow event event when range part count does not overflow", async () => {
+    const storage = {};
+
+    const dummyReq = {
+      ip: "::1",
+      headers: {
+        range: "bytes=2-50",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        maxParts: 1,
+        onRangeOverflow: () => {
+          assert.fail();
+        },
+      });
+
+      track(dummyReq, res, next);
+
+      resolve();
+    });
+  });
 });

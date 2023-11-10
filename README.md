@@ -76,6 +76,19 @@ onRobotic(req, reason);
 onSimilarTimestamp(req, ips);
 ```
 
+`onRangeOverflow` - fires with either `parts` or `overflow` reason when segment count is larger than `maxParts` or `max` value is smaller than the biggest part of any segment, respectively
+
+```js
+const track = rangeTracker({
+  storage,
+  maxParts: 3,
+  max: 50
+  onRangeOverflow: (req, reason) => {
+    console.log(reason);
+  },
+});
+```
+
 # Test
 
 ```bash
