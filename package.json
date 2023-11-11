@@ -1,6 +1,6 @@
 {
   "name": "express-range-tracker",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Detects bots by tracking the timings of range header",
   "main": "index.js",
   "files": [
