@@ -768,4 +768,56 @@ describe("express-range-tracker", () => {
       resolve();
     });
   });
+
+  it("should fire onrobotic negative event on negative from range", async () => {
+    const expected = "negative";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {
+        range: "bytes=-50,100",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
+
+  it("should fire onrobotic negative event on negative to range", async () => {
+    const expected = "negative";
+    const storage = {};
+
+    const req = {
+      ip: "::1",
+      headers: {
+        range: "bytes=50,-100",
+      },
+    };
+
+    await new Promise((resolve) => {
+      const track = rangeTracker({
+        storage,
+        onRobotic: (badReq, reason) => {
+          assert.strictEqual(reason, expected);
+          assert.deepStrictEqual(badReq, req);
+
+          resolve();
+        },
+      });
+
+      track(req, res, next);
+    });
+  });
 });

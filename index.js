@@ -73,12 +73,16 @@ module.exports = (
       }
 
       if (typeof onRobotic === "function") {
-        if (!/^bytes=\d+-\d*(,\d+-\d*)*$/g.test(req.headers.range)) {
+        if (!/^bytes=-?\d+-?\d*(,-?\d+-?\d*)*$/g.test(req.headers.range)) {
           onRobotic(req, "malformed");
         }
 
         if (from > to) {
           onRobotic(req, "digits");
+        }
+
+        if (!from || !to) {
+          onRobotic(req, "negative");
         }
       }
 
