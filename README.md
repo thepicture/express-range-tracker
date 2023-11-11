@@ -65,6 +65,7 @@ const track = rangeTracker({
 - `digits` - `from` is bigger than `to` in range segment
 - `empty` - range header is present but length of string is 0
 - `absent` - request of content that should have range header but does not exist
+- `negative` - negative from or to range detected
 
 ```js
 onRobotic(req, reason);
