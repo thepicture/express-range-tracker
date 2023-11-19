@@ -2,6 +2,7 @@
   "name": "express-range-tracker",
   "version": "1.0.10",
   "description": "Detects bots by tracking the timings of range header",
+  "repository": "thepicture/express-range-tracker",
   "main": "index.js",
   "files": [
     "index.js"
